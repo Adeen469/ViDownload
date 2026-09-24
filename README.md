@@ -8,8 +8,12 @@ and available quality options, and you pick one to download.
 ## Supported platforms
 
 YouTube, Instagram, Facebook, X/Twitter, LinkedIn, Reddit, TikTok, Vimeo,
-Dailymotion, Twitch. This list is deliberately curated (see `SUPPORTED_DOMAINS`
-in `app.py`) — it isn't every site yt-dlp can theoretically reach.
+Dailymotion, Twitch, XHamster (including numbered `.com` and `.desi` variants),
+Pornhub, Eporner, XVideos, XNXX, YouPorn,
+RedGIFs, SpankBang, Tube8, YouJizz, Chaturbate, and Motherless. This list is
+deliberately curated (see `SUPPORTED_DOMAINS` in `app.py`) — it isn't every
+site yt-dlp can theoretically reach, and availability can vary by video,
+region, or login requirements.
 
 ## Setup
 

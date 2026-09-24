@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fetchable — video downloader (college project)</title>
+<title>ViDownload</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <div class="wrap">
     <header>
-      <p class="kicker">Educational project</p>
+      <p class="kicker"></p>
       <h1>Paste a link. Pick a quality. Get the file.</h1>
-      <p class="subtitle">Works with YouTube, Instagram, Facebook, X, LinkedIn, Reddit, TikTok, Vimeo, Dailymotion, and Twitch.</p>
+      <!-- <p class="subtitle">Works with major video and social platforms, including YouTube, Instagram, TikTok, X, Reddit, Vimeo, Twitch, and more.</p> -->
     </header>
 
     <section class="fetch-box">
@@ -38,6 +38,10 @@
         <button id="download-btn">Download</button>
       </div>
       <p id="download-status" class="status hidden">Downloading — larger files take longer…</p>
+      <div id="download-progress" class="download-progress hidden">
+        <progress id="progress-bar" max="100" value="0" aria-label="Download progress"></progress>
+        <span id="progress-label">0%</span>
+      </div>
     </section>
 
     <footer>

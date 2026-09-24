@@ -10,6 +10,9 @@ const durationEl = document.getElementById("duration");
 const qualitySelect = document.getElementById("quality-select");
 const downloadBtn = document.getElementById("download-btn");
 const downloadStatus = document.getElementById("download-status");
+const downloadProgress = document.getElementById("download-progress");
+const progressBar = document.getElementById("progress-bar");
+const progressLabel = document.getElementById("progress-label");
 
 let currentUrl = "";
 
@@ -69,7 +72,7 @@ async function fetchInfo() {
     data.formats.forEach((f) => {
       const opt = document.createElement("option");
       opt.value = f.format_id;
-      opt.textContent = `${f.label} — ${f.filesize}`;
+      opt.textContent = `${f.label} | Size: ${f.filesize}`;
       qualitySelect.appendChild(opt);
     });
 
@@ -87,15 +90,39 @@ async function downloadSelected() {
   if (!formatId || !currentUrl) return;
 
   downloadStatus.classList.remove("hidden");
+  downloadProgress.classList.remove("hidden");
+  progressBar.removeAttribute("value");
+  progressLabel.textContent = "Preparing video…";
   downloadBtn.disabled = true;
   clearError();
 
   try {
-    const res = await fetch("/api/download", {
+    const startRes = await fetch("/api/download/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: currentUrl, format_id: formatId }),
     });
+    const startData = await startRes.json();
+    if (!startRes.ok) {
+      showError(startData.error || "Download failed.");
+      return;
+    }
+
+    const jobId = startData.job_id;
+    let statusData;
+    do {
+      await new Promise((resolve) => window.setTimeout(resolve, 500));
+      const statusRes = await fetch(`/api/download/status/${jobId}`);
+      statusData = await statusRes.json();
+      if (!statusRes.ok || statusData.status === "error") {
+        showError(statusData.error || "Download failed.");
+        return;
+      }
+      progressBar.value = statusData.progress;
+      progressLabel.textContent = `Preparing ${statusData.progress}%`;
+    } while (statusData.status !== "ready");
+
+    const res = await fetch(`/api/download/file/${jobId}`);
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -103,22 +130,41 @@ async function downloadSelected() {
       return;
     }
 
-    const blob = await res.blob();
-    const disposition = res.headers.get("Content-Disposition") || "";
-    const match = disposition.match(/filename="?([^"]+)"?/);
-    const filename = match ? match[1] : "video";
+    const reader = res.body.getReader();
+    const chunks = [];
+    const total = Number(res.headers.get("Content-Length")) || 0;
+    let received = 0;
 
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      received += value.length;
+      if (total) {
+        const percent = Math.min(100, Math.round((received / total) * 100));
+        progressBar.value = percent;
+        progressLabel.textContent = `Saving ${percent}%`;
+      } else {
+        progressLabel.textContent = `${Math.round(received / 1024 / 1024)} MB received`;
+      }
+    }
+
+    progressBar.value = 100;
+    progressLabel.textContent = "100%";
+    const blob = new Blob(chunks, { type: res.headers.get("Content-Type") || "video/mp4" });
+    const disposition = res.headers.get("Content-Disposition") || "";
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    const filename = match ? match[1] : "video";
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = filename;
-    document.body.appendChild(link);
     link.click();
-    link.remove();
     URL.revokeObjectURL(link.href);
   } catch (err) {
     showError("Download failed.");
   } finally {
     downloadStatus.classList.add("hidden");
+    downloadProgress.classList.add("hidden");
     downloadBtn.disabled = false;
   }
 }
