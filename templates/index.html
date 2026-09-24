@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fetchable — video downloader (college project)</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="kicker">Educational project</p>
+      <h1>Paste a link. Pick a quality. Get the file.</h1>
+      <p class="subtitle">Works with YouTube, Instagram, Facebook, X, LinkedIn, Reddit, TikTok, Vimeo, Dailymotion, and Twitch.</p>
+    </header>
+
+    <section class="fetch-box">
+      <input id="url-input" type="text" placeholder="https://..." autocomplete="off" />
+      <button id="fetch-btn">Fetch details</button>
+    </section>
+
+    <p id="error-msg" class="error hidden"></p>
+    <p id="loading-msg" class="status hidden">Reading the link…</p>
+
+    <section id="result" class="result hidden">
+      <div class="preview">
+        <img id="thumb" alt="video thumbnail">
+        <div class="meta">
+          <h2 id="title"></h2>
+          <p id="uploader"></p>
+          <p id="duration"></p>
+        </div>
+      </div>
+
+      <div class="quality-row">
+        <label for="quality-select">Quality</label>
+        <select id="quality-select"></select>
+        <button id="download-btn">Download</button>
+      </div>
+      <p id="download-status" class="status hidden">Downloading — larger files take longer…</p>
+    </section>
+
+    <footer>
+      
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
