@@ -169,30 +169,49 @@
       statusEl.classList.remove("hidden");
       startBtn.disabled = true;
       try {
-        var res = await fetch("/api/info", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: url }),
-        });
-        var data = await res.json();
-        if (!res.ok) {
-          showError(data.error || "Something went wrong.");
+        // YouTube sometimes refuses extraction from a cloud server for a
+        // moment and works on the next try — retry once before giving up.
+        for (var attempt = 1; attempt <= 2; attempt++) {
+          var res, data;
+          try {
+            res = await fetch("/api/info", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url: url }),
+            });
+            data = await res.json();
+          } catch (e) {
+            if (attempt < 2) {
+              statusEl.textContent = "YouTube refused — retrying…";
+              await new Promise(function (resolve) { window.setTimeout(resolve, 1500); });
+              continue;
+            }
+            showError("Couldn't reach the server. Tap Download again to retry.");
+            return;
+          }
+          if (!res.ok) {
+            if (attempt < 2) {
+              statusEl.textContent = "YouTube refused — retrying…";
+              await new Promise(function (resolve) { window.setTimeout(resolve, 1500); });
+              continue;
+            }
+            showError((data.error || "Something went wrong.") + " Tap Download again to retry.");
+            return;
+          }
+          select.innerHTML = "";
+          if (!data.formats || !data.formats.length) {
+            showError("No downloadable formats were found for this video.");
+            return;
+          }
+          data.formats.forEach(function (f) {
+            var opt = document.createElement("option");
+            opt.value = f.format_id;
+            opt.textContent = f.label + " | Size: " + f.filesize;
+            select.appendChild(opt);
+          });
+          formatsLoaded = true;
           return;
         }
-        select.innerHTML = "";
-        if (!data.formats || !data.formats.length) {
-          showError("No downloadable formats were found for this video.");
-          return;
-        }
-        data.formats.forEach(function (f) {
-          var opt = document.createElement("option");
-          opt.value = f.format_id;
-          opt.textContent = f.label + " | Size: " + f.filesize;
-          select.appendChild(opt);
-        });
-        formatsLoaded = true;
-      } catch (e) {
-        showError("Couldn't reach the server.");
       } finally {
         statusEl.classList.add("hidden");
         startBtn.disabled = false;
@@ -211,16 +230,38 @@
       startBtn.disabled = true;
       button.disabled = true;
       try {
-        var startRes = await fetch("/api/download/start", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: url, format_id: formatId }),
-        });
-        var startData = await startRes.json();
-        if (!startRes.ok) {
-          showError(startData.error || "Download failed.");
-          return;
+        // Same transient YouTube refusal as the info step — retry once.
+        var startRes, startData, started = false;
+        for (var startAttempt = 1; startAttempt <= 2; startAttempt++) {
+          try {
+            startRes = await fetch("/api/download/start", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url: url, format_id: formatId }),
+            });
+            startData = await startRes.json();
+          } catch (e) {
+            if (startAttempt < 2) {
+              label.textContent = "YouTube refused — retrying…";
+              await new Promise(function (resolve) { window.setTimeout(resolve, 1500); });
+              continue;
+            }
+            showError("Couldn't reach the server. Tap Download again to retry.");
+            return;
+          }
+          if (!startRes.ok) {
+            if (startAttempt < 2) {
+              label.textContent = "YouTube refused — retrying…";
+              await new Promise(function (resolve) { window.setTimeout(resolve, 1500); });
+              continue;
+            }
+            showError((startData.error || "Download failed.") + " Tap Download again to retry.");
+            return;
+          }
+          started = true;
+          break;
         }
+        if (!started) return;
         var jobId = startData.job_id;
         var statusData;
         do {
