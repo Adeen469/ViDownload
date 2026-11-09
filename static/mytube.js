@@ -136,6 +136,157 @@
     paint();
   }
 
+  /* ---- download this video (same /api/info + /api/download job flow
+     as Vidownloads, implemented here in MyTube only) ---- */
+
+  function wireDownloadButton() {
+    var button = document.getElementById("download-btn");
+    var panel = document.getElementById("download-panel");
+    var select = document.getElementById("download-quality");
+    var startBtn = document.getElementById("download-start");
+    var statusEl = document.getElementById("download-status");
+    var progressEl = document.getElementById("download-progress");
+    var bar = document.getElementById("download-bar");
+    var label = document.getElementById("download-label");
+    var errorEl = document.getElementById("download-error");
+    if (!button || !panel || !select || !startBtn) return;
+    var videoId = button.getAttribute("data-video-id");
+    var url = "https://www.youtube.com/watch?v=" + videoId;
+    var formatsLoaded = false;
+    var downloading = false;
+
+    function showError(message) {
+      errorEl.textContent = message;
+      errorEl.classList.remove("hidden");
+    }
+    function clearError() {
+      errorEl.classList.add("hidden");
+    }
+
+    async function loadFormats() {
+      clearError();
+      statusEl.textContent = "Loading qualities…";
+      statusEl.classList.remove("hidden");
+      startBtn.disabled = true;
+      try {
+        var res = await fetch("/api/info", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: url }),
+        });
+        var data = await res.json();
+        if (!res.ok) {
+          showError(data.error || "Something went wrong.");
+          return;
+        }
+        select.innerHTML = "";
+        if (!data.formats || !data.formats.length) {
+          showError("No downloadable formats were found for this video.");
+          return;
+        }
+        data.formats.forEach(function (f) {
+          var opt = document.createElement("option");
+          opt.value = f.format_id;
+          opt.textContent = f.label + " | Size: " + f.filesize;
+          select.appendChild(opt);
+        });
+        formatsLoaded = true;
+      } catch (e) {
+        showError("Couldn't reach the server.");
+      } finally {
+        statusEl.classList.add("hidden");
+        startBtn.disabled = false;
+      }
+    }
+
+    async function downloadSelected() {
+      var formatId = select.value;
+      if (!formatId || downloading) return;
+      downloading = true;
+      clearError();
+      statusEl.classList.add("hidden");
+      progressEl.classList.remove("hidden");
+      bar.removeAttribute("value");
+      label.textContent = "Preparing video…";
+      startBtn.disabled = true;
+      button.disabled = true;
+      try {
+        var startRes = await fetch("/api/download/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: url, format_id: formatId }),
+        });
+        var startData = await startRes.json();
+        if (!startRes.ok) {
+          showError(startData.error || "Download failed.");
+          return;
+        }
+        var jobId = startData.job_id;
+        var statusData;
+        do {
+          await new Promise(function (resolve) { window.setTimeout(resolve, 500); });
+          var statusRes = await fetch("/api/download/status/" + jobId);
+          statusData = await statusRes.json();
+          if (!statusRes.ok || statusData.status === "error") {
+            showError(statusData.error || "Download failed.");
+            return;
+          }
+          bar.value = statusData.progress;
+          label.textContent = "Preparing " + statusData.progress + "%";
+        } while (statusData.status !== "ready");
+
+        var res = await fetch("/api/download/file/" + jobId);
+        if (!res.ok) {
+          var errData = await res.json().catch(function () { return {}; });
+          showError(errData.error || "Download failed.");
+          return;
+        }
+        var reader = res.body.getReader();
+        var chunks = [];
+        var total = Number(res.headers.get("Content-Length")) || 0;
+        var received = 0;
+        while (true) {
+          var step = await reader.read();
+          if (step.done) break;
+          chunks.push(step.value);
+          received += step.value.length;
+          if (total) {
+            var percent = Math.min(100, Math.round((received / total) * 100));
+            bar.value = percent;
+            label.textContent = "Saving " + percent + "%";
+          } else {
+            label.textContent = Math.round(received / 1024 / 1024) + " MB received";
+          }
+        }
+        bar.value = 100;
+        label.textContent = "100%";
+        var blob = new Blob(chunks, { type: res.headers.get("Content-Type") || "video/mp4" });
+        var disposition = res.headers.get("Content-Disposition") || "";
+        var match = disposition.match(/filename="?([^";]+)"?/);
+        var filename = match ? match[1] : "video";
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      } catch (e) {
+        showError("Download failed.");
+      } finally {
+        progressEl.classList.add("hidden");
+        startBtn.disabled = false;
+        button.disabled = false;
+        downloading = false;
+      }
+    }
+
+    button.addEventListener("click", function () {
+      var opening = panel.classList.contains("hidden");
+      panel.classList.toggle("hidden");
+      if (opening && !formatsLoaded) loadFormats();
+    });
+    startBtn.addEventListener("click", downloadSelected);
+  }
+
   /* ---- autoplay next (YouTube IFrame API) ---- */
 
   var nextVideoId = "";
@@ -294,6 +445,7 @@
   window.MT = {
     recordWatch: recordWatch,
     wireWatchActions: wireWatchActions,
+    wireDownloadButton: wireDownloadButton,
     wireSubscribeButton: wireSubscribeButton,
     setupAutoplayNext: setupAutoplayNext,
     homeRecommendations: homeRecommendations,

@@ -293,6 +293,44 @@ body.mytube {
 
 .mt-action-btn.active { background: var(--accent); color: #fff; }
 
+/* ---- watch page download panel ---- */
+
+.mt-download-panel:not(.hidden) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mt-download-select {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 10px;
+  font-size: 13.5px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.mt-download-status { margin: 0; }
+
+.mt-download-progress:not(.hidden) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.mt-download-progress progress { flex: 1; height: 8px; }
+
+.mt-download-progress span { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+.mt-download-error { color: #b3261e; font-size: 13.5px; margin: 0; }
+
 .mt-autoplay { font-size: 13.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 
 .mt-description {

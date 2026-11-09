@@ -25,7 +25,20 @@
     <div class="mt-watch-actions">
       <button id="like-btn" class="mt-action-btn" type="button" data-video-id="{{ video.id }}" data-vote="1">&#128077; Like</button>
       <button id="dislike-btn" class="mt-action-btn" type="button" data-video-id="{{ video.id }}" data-vote="-1">&#128078; Dislike</button>
+      <button id="download-btn" class="mt-action-btn" type="button" data-video-id="{{ video.id }}">&#11015; Download</button>
       <label class="mt-autoplay"><input id="autoplay-next" type="checkbox" checked> Autoplay next</label>
+    </div>
+    {# Download panel — same /api/info + /api/download job flow as Vidownloads,
+       implemented here in MyTube only; nothing in Vidownloads is changed. #}
+    <div id="download-panel" class="mt-download-panel hidden">
+      <select id="download-quality" class="mt-download-select" aria-label="Download quality"></select>
+      <button id="download-start" class="mt-action-btn" type="button">Download</button>
+      <p id="download-status" class="status hidden"></p>
+      <div id="download-progress" class="mt-download-progress hidden">
+        <progress id="download-bar" max="100" value="0"></progress>
+        <span id="download-label"></span>
+      </div>
+      <p id="download-error" class="mt-download-error hidden"></p>
     </div>
     {% if video.description %}
     <details class="mt-description">
@@ -64,6 +77,7 @@
       thumbnail: {{ video.thumbnail | tojson }}
     });
     MT.wireWatchActions();
+    MT.wireDownloadButton();
     MT.setupAutoplayNext({{ (related[0].id if related else '') | tojson }});
   });
 </script>
