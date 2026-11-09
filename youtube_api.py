@@ -353,15 +353,21 @@ def video_details(video_id):
 
 
 def related_videos(video_id, max_results=12):
-    """Videos related to one video (cost: 100 units)."""
+    """Videos related to one video (cost: 100 units).
+
+    NOTE: only part/type/relatedToVideoId/maxResults/regionCode are sent.
+    YouTube rejects relatedToVideoId combined with the video* filter
+    params (videoEmbeddable, safeSearch, etc.) with 400 "Request contains
+    an invalid argument." — the exact failure every watch page hit. The
+    enrich_and_filter step below still drops non-embeddable videos, so
+    Up next stays playable without those filters.
+    """
     data = api_get("search", {
         "part": "snippet",
         "type": "video",
         "relatedToVideoId": video_id,
         "maxResults": str(max_results),
         "regionCode": "IN",
-        "videoEmbeddable": "true",
-        "safeSearch": "moderate",
     })
     return enrich_and_filter([map_video(item) for item in data.get("items", [])])
 

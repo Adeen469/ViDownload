@@ -260,12 +260,20 @@ def mytube_watch():
         return render_template("mytube/watch.html", **context)
     try:
         video = youtube_api.video_details(video_id)
-        related = youtube_api.related_videos(video_id) if video else []
     except YouTubeAPIError as exc:
         context["api_error"] = str(exc)
         return render_template("mytube/watch.html", **context)
     if not video:
         return render_template("mytube/watch.html", **context), 404
+    try:
+        related = youtube_api.related_videos(video_id)
+    except YouTubeAPIError:
+        # "Up next" is optional — never let it kill the player. Fall back
+        # to trending so the sidebar is not empty.
+        try:
+            related = youtube_api.trending(max_results=12)
+        except YouTubeAPIError:
+            related = []
     context.update(video=video, related=related)
     return render_template("mytube/watch.html", **context)
 
