@@ -391,16 +391,23 @@ def get_info():
         })
 
     # YouTube reports several streams per quality (different codecs and
-    # bitrates share one "720p · mp4" label). Keep only the biggest stream
-    # per (height, ext) so each quality appears once.
-    best_by_quality = {}
+    # bitrates share one "720p" label, and every quality comes in both
+    # mp4 and webm). Keep only ONE entry per height — mp4 preferred
+    # (the download is merged to .mp4 anyway), biggest stream within it.
+    best_by_height = {}
     for entry in formats:
-        key = (entry["height"], entry["ext"])
-        if key not in best_by_quality or entry["size_bytes"] > best_by_quality[key]["size_bytes"]:
-            best_by_quality[key] = entry
+        height = entry["height"]
+        current = best_by_height.get(height)
+        if current is None:
+            best_by_height[height] = entry
+            continue
+        current_score = (1 if current["ext"] == "mp4" else 0, current["size_bytes"])
+        new_score = (1 if entry["ext"] == "mp4" else 0, entry["size_bytes"])
+        if new_score > current_score:
+            best_by_height[height] = entry
     formats = [
         {k: v for k, v in entry.items() if k not in ("size_bytes", "ext")}
-        for entry in best_by_quality.values()
+        for entry in best_by_height.values()
     ]
 
     formats.sort(key=lambda x: (x["audio_only"], -x["height"]))
