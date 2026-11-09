@@ -1,0 +1,19 @@
+{% extends "mytube/base.html" %}
+{% block title %}History — MyTube{% endblock %}
+
+{% block content %}
+<section class="mt-section">
+  <h2>Watch history</h2>
+  <p class="status">History lives in this browser only — nothing is uploaded.</p>
+  <div id="history-list" class="mt-history-list"></div>
+  <button id="clear-history" class="mt-clear-btn" type="button">Clear history</button>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof MT !== "undefined") MT.renderHistoryPage();
+  });
+</script>
+{% endblock %}

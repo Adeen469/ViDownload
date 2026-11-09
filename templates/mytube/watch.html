@@ -1,0 +1,71 @@
+{% extends "mytube/base.html" %}
+{% from "mytube/_cards.html" import video_row %}
+{% block title %}{{ video.title }} — MyTube{% endblock %}
+
+{% block content %}
+{% if not api_missing and not api_error and video %}
+<div class="mt-watch">
+  <div class="mt-watch-main">
+    <div class="mt-player">
+      {# Official YouTube embed only — no stream extraction, no downloading. #}
+      <iframe id="mt-player" src="https://www.youtube.com/embed/{{ video.id }}?rel=0&amp;enablejsapi=1"
+              title="{{ video.title }}" frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen></iframe>
+    </div>
+    <h1 class="mt-watch-title">{{ video.title }}</h1>
+    <div class="mt-watch-channel">
+      <a href="/mytube/channel/{{ video.channel_id }}">
+        <span class="mt-watch-channel-name">{{ video.channel }}</span>
+      </a>
+      <button id="subscribe-btn" class="mt-subscribe" type="button"
+              data-channel-id="{{ video.channel_id }}" data-channel-name="{{ video.channel }}">Subscribe</button>
+    </div>
+    <p class="mt-watch-meta">{{ video.views_label }}{% if video.views_label and video.age %} &middot; {% endif %}{{ video.age }}{% if video.likes_label %} &middot; {{ video.likes_label }} likes{% endif %}</p>
+    <div class="mt-watch-actions">
+      <button id="like-btn" class="mt-action-btn" type="button" data-video-id="{{ video.id }}" data-vote="1">&#128077; Like</button>
+      <button id="dislike-btn" class="mt-action-btn" type="button" data-video-id="{{ video.id }}" data-vote="-1">&#128078; Dislike</button>
+      <label class="mt-autoplay"><input id="autoplay-next" type="checkbox" checked> Autoplay next</label>
+    </div>
+    {% if video.description %}
+    <details class="mt-description">
+      <summary>Description</summary>
+      <p>{{ video.description }}</p>
+    </details>
+    {% endif %}
+  </div>
+  <aside class="mt-upnext">
+    <h2>Up next</h2>
+    {% if related %}
+    {% for v in related %}{{ video_row(v) }}{% endfor %}
+    {% else %}
+    <p class="status">No related videos found.</p>
+    {% endif %}
+  </aside>
+</div>
+{% elif not api_missing and not api_error %}
+<p class="status">This video could not be found or cannot be played here.</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if video %}
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+  // Record the watch in local history, wire like/dislike + subscribe,
+  // and autoplay the next video when this one ends (if enabled).
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof MT === "undefined") return;
+    MT.recordWatch({
+      id: {{ video.id | tojson }},
+      title: {{ video.title | tojson }},
+      channel: {{ video.channel | tojson }},
+      channel_id: {{ video.channel_id | tojson }},
+      thumbnail: {{ video.thumbnail | tojson }}
+    });
+    MT.wireWatchActions();
+    MT.setupAutoplayNext({{ (related[0].id if related else '') | tojson }});
+  });
+</script>
+{% endif %}
+{% endblock %}

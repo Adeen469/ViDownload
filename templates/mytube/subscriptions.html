@@ -1,0 +1,18 @@
+{% extends "mytube/base.html" %}
+{% block title %}Subscriptions — MyTube{% endblock %}
+
+{% block content %}
+<section class="mt-section">
+  <h2>Subscriptions</h2>
+  <p class="status">Subscriptions live in this browser only — nothing is uploaded.</p>
+  <div id="subs-list" class="mt-subs-list"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof MT !== "undefined") MT.renderSubscriptionsPage();
+  });
+</script>
+{% endblock %}

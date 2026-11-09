@@ -1,0 +1,33 @@
+{# Shared video-card macro for MyTube grids and lists. #}
+{% macro video_card(v) %}
+<article class="mt-card" data-channel-id="{{ v.channel_id }}">
+  <a class="mt-thumb" href="/mytube/watch?v={{ v.id }}" aria-label="{{ v.title }}">
+    <img src="{{ v.thumbnail }}" alt="" loading="lazy">
+    {% if v.duration_label %}<span class="mt-duration">{{ v.duration_label }}</span>{% endif %}
+  </a>
+  <div class="mt-card-body">
+    <a class="mt-card-title" href="/mytube/watch?v={{ v.id }}">{{ v.title }}</a>
+    {% if v.channel_id %}
+    <a class="mt-card-channel" href="/mytube/channel/{{ v.channel_id }}">{{ v.channel }}</a>
+    {% else %}
+    <span class="mt-card-channel">{{ v.channel }}</span>
+    {% endif %}
+    <p class="mt-card-meta">{{ v.views_label }}{% if v.views_label and v.age %} &middot; {% endif %}{{ v.age }}</p>
+  </div>
+</article>
+{% endmacro %}
+
+{% macro video_row(v) %}
+{# Compact horizontal row, used for the "Up next" sidebar on watch. #}
+<article class="mt-row" data-channel-id="{{ v.channel_id }}">
+  <a class="mt-row-thumb" href="/mytube/watch?v={{ v.id }}" aria-label="{{ v.title }}">
+    <img src="{{ v.thumbnail }}" alt="" loading="lazy">
+    {% if v.duration_label %}<span class="mt-duration">{{ v.duration_label }}</span>{% endif %}
+  </a>
+  <div class="mt-row-body">
+    <a class="mt-row-title" href="/mytube/watch?v={{ v.id }}">{{ v.title }}</a>
+    <a class="mt-row-channel" href="/mytube/channel/{{ v.channel_id }}">{{ v.channel }}</a>
+    <p class="mt-row-meta">{{ v.views_label }}{% if v.views_label and v.age %} &middot; {% endif %}{{ v.age }}</p>
+  </div>
+</article>
+{% endmacro %}

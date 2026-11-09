@@ -20,7 +20,10 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import yt_dlp
-from flask import Flask, after_this_request, jsonify, render_template, request, send_file
+from flask import Flask, after_this_request, jsonify, redirect, render_template, request, send_file
+
+import youtube_api
+from youtube_api import YouTubeAPIError
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -150,7 +153,168 @@ def create_download_job(url, format_id):
 
 @app.route("/")
 def index():
+    return render_template("landing.html")
+
+
+@app.route("/vidownloads")
+def vidownloads():
     return render_template("index.html")
+
+
+# ---- MyTube (YouTube clone) ----
+# Embeds only: videos play through the official YouTube iframe player.
+# No YouTube stream is ever extracted or downloaded here.
+
+VIDEO_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
+CHANNEL_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+
+
+def _mytube_context(active="home", **extra):
+    context = {"api_missing": not youtube_api.is_configured(), "api_error": None, "active": active}
+    context.update(extra)
+    return context
+
+
+def _category_chips(selected_label):
+    chips = []
+    for category in youtube_api.CATEGORIES:
+        chips.append({
+            "label": category["label"],
+            "param": "" if category["kind"] == "all" else category["label"],
+            "active": category["label"].lower() == (selected_label or "all").lower(),
+        })
+    return chips
+
+
+@app.route("/mytube")
+def mytube_home():
+    category_param = (request.args.get("category") or "").strip()
+    selected = next(
+        (c for c in youtube_api.CATEGORIES
+         if c["label"].lower() == category_param.lower()
+         or (c["value"] and c["value"] == category_param)),
+        youtube_api.CATEGORIES[0],
+    )
+    context = _mytube_context(
+        active="home",
+        categories=_category_chips(selected["label"]),
+        heading="Recommended",
+        videos=[],
+        extra_rows=[],
+    )
+    if not youtube_api.is_configured():
+        return render_template("mytube/home.html", **context)
+    try:
+        if selected["kind"] == "all":
+            videos = youtube_api.trending(max_results=24)
+            extra_rows = [
+                {"heading": "Music", "videos": youtube_api.trending(category_id="10", max_results=8)},
+                {"heading": "Gaming", "videos": youtube_api.trending(category_id="20", max_results=8)},
+            ]
+            context.update(videos=videos, extra_rows=extra_rows)
+        elif selected["kind"] == "category":
+            videos = youtube_api.trending(category_id=selected["value"], max_results=24)
+            context.update(heading=f"{selected['label']} — trending", videos=videos)
+        else:  # search-based chip (e.g. Cooking has no category id)
+            videos = youtube_api.search_videos(selected["value"], max_results=24)
+            context.update(heading=selected["label"], videos=videos)
+    except YouTubeAPIError as exc:
+        context["api_error"] = str(exc)
+    return render_template("mytube/home.html", **context)
+
+
+@app.route("/mytube/trending")
+def mytube_trending():
+    context = _mytube_context(active="trending", videos=[])
+    if not youtube_api.is_configured():
+        return render_template("mytube/trending.html", **context)
+    try:
+        context["videos"] = youtube_api.trending(max_results=24)
+    except YouTubeAPIError as exc:
+        context["api_error"] = str(exc)
+    return render_template("mytube/trending.html", **context)
+
+
+@app.route("/mytube/search")
+def mytube_search():
+    query = (request.args.get("q") or "").strip()
+    if not query:
+        return redirect("/mytube")
+    context = _mytube_context(active="home", q=query, videos=[])
+    if not youtube_api.is_configured():
+        return render_template("mytube/search.html", **context)
+    try:
+        context["videos"] = youtube_api.search_videos(query, max_results=24)
+    except YouTubeAPIError as exc:
+        context["api_error"] = str(exc)
+    return render_template("mytube/search.html", **context)
+
+
+@app.route("/mytube/watch")
+def mytube_watch():
+    video_id = (request.args.get("v") or "").strip()
+    context = _mytube_context(active="home", video=None, related=[])
+    if not VIDEO_ID_RE.match(video_id):
+        return render_template("mytube/watch.html", **context), 404
+    if not youtube_api.is_configured():
+        return render_template("mytube/watch.html", **context)
+    try:
+        video = youtube_api.video_details(video_id)
+        related = youtube_api.related_videos(video_id) if video else []
+    except YouTubeAPIError as exc:
+        context["api_error"] = str(exc)
+        return render_template("mytube/watch.html", **context)
+    if not video:
+        return render_template("mytube/watch.html", **context), 404
+    context.update(video=video, related=related)
+    return render_template("mytube/watch.html", **context)
+
+
+@app.route("/mytube/channel/<channel_id>")
+def mytube_channel(channel_id):
+    context = _mytube_context(active="home", channel=None, videos=[])
+    if not CHANNEL_ID_RE.match(channel_id):
+        return render_template("mytube/channel.html", **context), 404
+    if not youtube_api.is_configured():
+        return render_template("mytube/channel.html", **context)
+    try:
+        channel = youtube_api.channel_details(channel_id)
+        videos = youtube_api.channel_uploads(channel_id) if channel else []
+    except YouTubeAPIError as exc:
+        context["api_error"] = str(exc)
+        return render_template("mytube/channel.html", **context)
+    if not channel:
+        return render_template("mytube/channel.html", **context), 404
+    context.update(channel=channel, videos=videos)
+    return render_template("mytube/channel.html", **context)
+
+
+@app.route("/mytube/history")
+def mytube_history():
+    # History lives in the browser (localStorage); the server renders the shell.
+    return render_template("mytube/history.html", **_mytube_context(active="history"))
+
+
+@app.route("/mytube/subscriptions")
+def mytube_subscriptions():
+    # Subscriptions live in the browser (localStorage); the server renders the shell.
+    return render_template("mytube/subscriptions.html", **_mytube_context(active="subscriptions"))
+
+
+@app.route("/mytube/api/channel-videos")
+def mytube_api_channel_videos():
+    """JSON: latest uploads of one channel, for the home page's
+    'Because you watched' row (driven by browser watch history)."""
+    channel_id = (request.args.get("channel_id") or "").strip()
+    if not CHANNEL_ID_RE.match(channel_id):
+        return jsonify({"error": "Invalid channel id."}), 400
+    if not youtube_api.is_configured():
+        return jsonify({"error": "YOUTUBE_API_KEY is not set.", "api_missing": True})
+    try:
+        videos = youtube_api.channel_uploads(channel_id, max_results=8)
+    except YouTubeAPIError as exc:
+        return jsonify({"error": str(exc)})
+    return jsonify({"videos": videos})
 
 
 @app.route("/api/info", methods=["POST"])

@@ -1,11 +1,49 @@
 # Video Downloader — College Project
 
-A small web app: paste a video URL, it fetches the title, thumbnail, uploader,
+A small web app with two halves: **MyTube** (a YouTube-style video
+experience) and **Vidownloads** (download videos from supported
+platforms). The landing page at `/` offers both as two cards.
+
+**Stack:** Flask (backend) + [yt-dlp](https://github.com/yt-dlp/yt-dlp) (extraction/download) + YouTube Data API v3 (MyTube) + vanilla HTML/CSS/JS (frontend).
+
+## MyTube
+
+Watch, search, trending and personalised recommendations — videos play
+through the official YouTube iframe embed player. **No YouTube stream
+is ever extracted or downloaded**; MyTube is embeds only.
+
+Routes: `/mytube` (home + category chips + recommendations),
+`/mytube/search?q=...`, `/mytube/watch?v=...` (player + Up next +
+autoplay-next), `/mytube/channel/<id>`, `/mytube/trending`,
+`/mytube/history` and `/mytube/subscriptions` (both driven by browser
+localStorage — no account, nothing is uploaded).
+
+Recommendations mix YouTube trending (`mostPopular`, region IN) with
+category picks. When the browser has watch history, videos from
+watched channels are boosted to the front and a "Because you watched
+X" row shows that channel's latest uploads.
+
+### Setup — MyTube needs a YouTube API key
+
+```bash
+export YOUTUBE_API_KEY="your-key-here"
+```
+
+Get one free at [Google Cloud Console](https://console.cloud.google.com/apis/credentials) (enable the **YouTube Data API v3**). Without the key, every MyTube page shows "Add YOUTUBE_API_KEY to run MyTube" instead of failing — the downloader still works.
+
+**Quota note:** the free default quota is 10,000 units/day. `search.list`
+costs 100 units per call, while `videos.list` / `channels.list` /
+`playlistItems.list` cost 1 — so the home page uses cheap `mostPopular`
+calls and search is only used for user searches, related videos and the
+Cooking chip. Responses are cached server-side for 5 minutes per query.
+
+## Vidownloads
+
+Paste a video URL, it fetches the title, thumbnail, uploader,
 and available quality options, and you pick one to download.
+Lives at `/vidownloads` (same downloader as before, unchanged API).
 
-**Stack:** Flask (backend) + [yt-dlp](https://github.com/yt-dlp/yt-dlp) (extraction/download) + vanilla HTML/CSS/JS (frontend).
-
-## Supported platforms
+## Supported platforms (Vidownloads)
 
 YouTube, Instagram, Facebook, X/Twitter, LinkedIn, Reddit, TikTok, Vimeo,
 Dailymotion, Twitch, XHamster (including numbered `.com` and `.desi` variants),
@@ -41,10 +79,24 @@ choco install ffmpeg
 python app.py
 ```
 
-Then open http://localhost:5000 in a browser.
+Then open http://localhost:5000 in a browser. Set `YOUTUBE_API_KEY`
+first if you want MyTube to show real videos (see above).
 
 ## How it works
 
+- `/` — landing page with two cards: MyTube and Vidownloads.
+- `GET /mytube` — home: trending (`videos.list`, `mostPopular`,
+  region IN) + category picks; watch history (localStorage) boosts
+  watched channels and drives the "Because you watched" row.
+- `GET /mytube/search?q=...` — `search.list` results.
+- `GET /mytube/watch?v=...` — video details + related videos
+  (`search.list` with `relatedToVideoId`), official YouTube embed.
+- `GET /mytube/channel/<id>` — channel details + uploads
+  (`playlistItems.list` on the uploads playlist).
+- `youtube_api.py` — the YouTube Data API v3 client (stdlib `urllib`
+  only), 5-minute server-side cache, India-availability filter
+  (public + embeddable + not region-blocked in IN), same conventions
+  as the My Music app.
 - `POST /api/info` — calls `yt_dlp.YoutubeDL().extract_info(url, download=False)`
   to pull metadata without downloading anything, filters the format list down
   to playable video/audio streams, and returns title, thumbnail, uploader,
@@ -57,14 +109,19 @@ Then open http://localhost:5000 in a browser.
 ## Project structure
 
 ```
-webapp/
-├── app.py                  # Flask routes + yt-dlp calls
+.
+├── app.py                  # Flask routes (landing, Vidownloads, MyTube) + yt-dlp calls
+├── youtube_api.py          # YouTube Data API v3 client (MyTube data layer)
 ├── requirements.txt
 ├── templates/
-│   └── index.html          # page shell
+│   ├── landing.html        # two-card landing page
+│   ├── index.html          # Vidownloads page shell
+│   └── mytube/             # MyTube pages (base, home, search, watch, channel, ...)
 └── static/
-    ├── style.css
-    └── script.js            # fetch info, render quality list, trigger download
+    ├── style.css           # shared palette + landing styles
+    ├── mytube.css          # MyTube layout
+    ├── mytube.js           # history / subscriptions / likes / autoplay-next
+    └── script.js           # Vidownloads: fetch info, render quality list, trigger download
 ```
 
 ## Scope and limits, for the write-up

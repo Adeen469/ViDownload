@@ -1,0 +1,447 @@
+/* MyTube — same palette as the rest of the site (see style.css :root). */
+
+body.mytube {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* ---- Top bar ---- */
+
+.mt-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+.mt-logo {
+  font-family: "Iowan Old Style", "Georgia", serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.mt-logo-play { color: var(--accent); }
+
+.mt-search {
+  display: flex;
+  flex: 1;
+  max-width: 640px;
+  margin: 0 auto;
+  gap: 8px;
+}
+
+.mt-search input { flex: 1; }
+
+.mt-vd-link {
+  font-size: 14px;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.mt-vd-link:hover { text-decoration: underline; }
+
+/* ---- Layout: sidebar + main ---- */
+
+.mt-layout {
+  display: flex;
+  align-items: flex-start;
+}
+
+.mt-sidebar {
+  position: sticky;
+  top: 57px;
+  flex-shrink: 0;
+  width: 200px;
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mt-sidebar a {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 6px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 14.5px;
+}
+
+.mt-sidebar a:hover { background: var(--accent-soft); }
+
+.mt-sidebar a.active {
+  background: var(--accent-soft);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.mt-sidebar hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 10px 4px;
+}
+
+.mt-main {
+  flex: 1;
+  min-width: 0;
+  padding: 20px 24px 48px;
+}
+
+/* ---- Notice (no API key / API error) ---- */
+
+.mt-notice {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  padding: 20px 22px;
+  margin-bottom: 24px;
+  max-width: 640px;
+}
+
+.mt-notice h2 {
+  font-family: "Iowan Old Style", "Georgia", serif;
+  font-size: 19px;
+  margin: 0 0 8px;
+}
+
+.mt-notice p { font-size: 14.5px; color: var(--muted); margin: 0; line-height: 1.6; }
+.mt-notice code { color: var(--ink); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+
+/* ---- Category chips ---- */
+
+.mt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.mt-chip {
+  padding: 7px 14px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 13.5px;
+}
+
+.mt-chip:hover { border-color: var(--accent); }
+
+.mt-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ---- Sections & video grid ---- */
+
+.mt-section { margin-bottom: 32px; }
+
+.mt-section h2 {
+  font-family: "Iowan Old Style", "Georgia", serif;
+  font-size: 21px;
+  margin: 0 0 14px;
+}
+
+.mt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px 16px;
+}
+
+.mt-card { min-width: 0; }
+
+.mt-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--accent-soft);
+}
+
+.mt-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mt-duration {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.mt-card-body { padding-top: 10px; }
+
+.mt-card-title {
+  display: block;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-bottom: 4px;
+}
+
+.mt-card-title:hover { color: var(--accent); }
+
+.mt-card-channel {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13.5px;
+  display: block;
+}
+
+.mt-card-channel:hover { color: var(--accent); }
+
+.mt-card-meta {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 2px 0 0;
+}
+
+/* ---- Watch page ---- */
+
+.mt-watch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+.mt-player {
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.mt-player iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 0;
+}
+
+.mt-watch-title {
+  font-family: "Iowan Old Style", "Georgia", serif;
+  font-size: 21px;
+  line-height: 1.3;
+  margin: 14px 0 8px;
+}
+
+.mt-watch-channel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.mt-watch-channel a { text-decoration: none; }
+
+.mt-watch-channel-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.mt-subscribe {
+  padding: 8px 16px;
+  font-size: 13.5px;
+  background: var(--ink);
+  color: #fff;
+}
+
+.mt-subscribe.subscribed { background: var(--accent); }
+
+.mt-watch-meta { color: var(--muted); font-size: 13.5px; margin: 4px 0 12px; }
+
+.mt-watch-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.mt-action-btn {
+  background: var(--accent-soft);
+  color: var(--ink);
+  padding: 8px 14px;
+  font-size: 13.5px;
+}
+
+.mt-action-btn.active { background: var(--accent); color: #fff; }
+
+.mt-autoplay { font-size: 13.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+
+.mt-description {
+  margin-top: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  background: var(--accent-soft);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.mt-description summary { cursor: pointer; font-weight: 600; }
+.mt-description p { white-space: pre-wrap; margin: 10px 0 0; color: var(--ink); }
+
+.mt-upnext h2 {
+  font-family: "Iowan Old Style", "Georgia", serif;
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+.mt-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mt-row-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 160px;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--accent-soft);
+  display: block;
+}
+
+.mt-row-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.mt-row-body { min-width: 0; }
+
+.mt-row-title {
+  display: block;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-bottom: 3px;
+}
+
+.mt-row-channel {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 12.5px;
+  display: block;
+}
+
+.mt-row-meta { color: var(--muted); font-size: 12.5px; margin: 2px 0 0; }
+
+/* ---- Channel page ---- */
+
+.mt-channel-banner {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: var(--accent-soft);
+}
+
+.mt-channel-info {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  margin-top: 18px;
+}
+
+.mt-channel-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.mt-channel-info h1 {
+  font-family: "Iowan Old Style", "Georgia", serif;
+  font-size: 24px;
+  margin: 0 0 4px;
+}
+
+.mt-channel-subs { color: var(--muted); font-size: 13.5px; margin: 0 0 8px; }
+
+.mt-channel-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+  white-space: pre-wrap;
+  max-width: 72ch;
+}
+
+/* ---- History / subscriptions pages ---- */
+
+.mt-history-list, .mt-subs-list { display: flex; flex-direction: column; gap: 4px; }
+
+.mt-history-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.mt-history-item img {
+  width: 120px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.mt-history-item a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14.5px; }
+.mt-history-item p { color: var(--muted); font-size: 13px; margin: 3px 0 0; }
+
+.mt-sub-card {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.mt-sub-card img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+
+.mt-sub-card a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15.5px; }
+
+.mt-clear-btn {
+  margin-top: 16px;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 900px) {
+  .mt-watch { grid-template-columns: 1fr; }
+  .mt-sidebar { display: none; }
+  .mt-topbar { flex-wrap: wrap; gap: 10px; }
+  .mt-search { order: 3; flex-basis: 100%; max-width: none; }
+  .mt-main { padding: 16px 16px 40px; }
+}

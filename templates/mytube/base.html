@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}MyTube{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='mytube.css') }}">
+</head>
+<body class="mytube">
+  <header class="mt-topbar">
+    <a class="mt-logo" href="/mytube"><span class="mt-logo-play">&#9654;</span> MyTube</a>
+    <form class="mt-search" action="/mytube/search" method="get" role="search">
+      <input type="text" name="q" placeholder="Search videos&hellip;" value="{{ q or '' }}" autocomplete="off" aria-label="Search videos">
+      <button type="submit">Search</button>
+    </form>
+    <a class="mt-vd-link" href="/vidownloads">Vidownloads</a>
+  </header>
+  <div class="mt-layout">
+    <nav class="mt-sidebar" aria-label="MyTube navigation">
+      <a href="/mytube" class="{{ 'active' if active == 'home' else '' }}">Home</a>
+      <a href="/mytube/trending" class="{{ 'active' if active == 'trending' else '' }}">Trending</a>
+      <a href="/mytube/subscriptions" class="{{ 'active' if active == 'subscriptions' else '' }}">Subscriptions</a>
+      <a href="/mytube/history" class="{{ 'active' if active == 'history' else '' }}">History</a>
+      <hr>
+      <a href="/vidownloads">Vidownloads</a>
+      <a href="/">&larr; All apps</a>
+    </nav>
+    <main class="mt-main">
+      {% if api_missing %}
+      <div class="mt-notice">
+        <h2>MyTube needs a YouTube API key</h2>
+        <p>Add <code>YOUTUBE_API_KEY</code> to the ViDownload deployment environment variables and redeploy. Videos, search and recommendations will appear once the key is set.</p>
+      </div>
+      {% elif api_error %}
+      <div class="mt-notice">
+        <h2>Couldn&rsquo;t load videos</h2>
+        <p>{{ api_error }}</p>
+      </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='mytube.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

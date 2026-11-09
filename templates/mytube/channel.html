@@ -1,0 +1,50 @@
+{% extends "mytube/base.html" %}
+{% from "mytube/_cards.html" import video_card %}
+{% block title %}{{ channel.title }} — MyTube{% endblock %}
+
+{% block content %}
+{% if not api_missing and not api_error and channel %}
+<section class="mt-channel-head">
+  {% if channel.banner %}
+  <img class="mt-channel-banner" src="{{ channel.banner }}" alt="" loading="lazy">
+  {% endif %}
+  <div class="mt-channel-info">
+    {% if channel.thumbnail %}
+    <img class="mt-channel-avatar" src="{{ channel.thumbnail }}" alt="">
+    {% endif %}
+    <div>
+      <h1>{{ channel.title }}</h1>
+      <p class="mt-channel-subs">{{ channel.subs_label }}</p>
+      {% if channel.description %}
+      <p class="mt-channel-desc">{{ channel.description }}</p>
+      {% endif %}
+      <button id="subscribe-btn" class="mt-subscribe" type="button"
+              data-channel-id="{{ channel.id }}" data-channel-name="{{ channel.title }}"
+              data-channel-thumb="{{ channel.thumbnail }}">Subscribe</button>
+    </div>
+  </div>
+</section>
+<section class="mt-section">
+  <h2>Uploads</h2>
+  {% if videos %}
+  <div class="mt-grid">
+    {% for v in videos %}{{ video_card(v) }}{% endfor %}
+  </div>
+  {% else %}
+  <p class="status">No uploads found for this channel.</p>
+  {% endif %}
+</section>
+{% elif not api_missing and not api_error %}
+<p class="status">This channel could not be found.</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if channel %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof MT !== "undefined") MT.wireSubscribeButton(document.getElementById("subscribe-btn"));
+  });
+</script>
+{% endif %}
+{% endblock %}
