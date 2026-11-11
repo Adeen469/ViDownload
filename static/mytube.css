@@ -474,12 +474,61 @@ body.mytube {
   border: 1px solid var(--line);
 }
 
+/* ---- Mobile nav (replaces the sidebar on small screens) ---- */
+
+.mt-mobilenav { display: none; }
+
 /* ---- Responsive ---- */
 
 @media (max-width: 900px) {
   .mt-watch { grid-template-columns: 1fr; }
   .mt-sidebar { display: none; }
-  .mt-topbar { flex-wrap: wrap; gap: 10px; }
+  .mt-mobilenav {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    scrollbar-width: none;
+  }
+  .mt-mobilenav::-webkit-scrollbar { display: none; }
+  .mt-mobilenav a {
+    flex-shrink: 0;
+    padding: 7px 12px;
+    border-radius: 16px;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 13.5px;
+    white-space: nowrap;
+  }
+  .mt-mobilenav a.active { background: var(--accent-soft); font-weight: 600; color: var(--accent); }
+  .mt-topbar { flex-wrap: wrap; gap: 10px; padding: 10px 12px; }
   .mt-search { order: 3; flex-basis: 100%; max-width: none; }
+  .mt-search input { min-width: 0; }
   .mt-main { padding: 16px 16px 40px; }
+  .mt-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px 12px; }
+  .mt-row-thumb { width: 140px; }
+}
+
+@media (max-width: 600px) {
+  .mt-logo { font-size: 19px; }
+  .mt-topbar { gap: 8px; }
+  .mt-search button { padding: 10px 14px; }
+  .mt-main { padding: 12px 12px 32px; }
+  .mt-grid { grid-template-columns: 1fr; gap: 18px; }
+  .mt-section h2 { font-size: 18px; }
+  .mt-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .mt-chips::-webkit-scrollbar { display: none; }
+  .mt-chip { flex-shrink: 0; }
+  .mt-watch-title { font-size: 18px; }
+  .mt-watch-channel { flex-wrap: wrap; }
+  .mt-row-thumb { width: 120px; }
+  .mt-row-title { font-size: 13px; }
+  .mt-channel-info { flex-direction: column; gap: 12px; }
+  .mt-channel-avatar { width: 64px; height: 64px; }
+  .mt-channel-info h1 { font-size: 20px; }
+  .mt-history-item img { width: 96px; }
+  .mt-download-select { flex-basis: 100%; min-width: 0; }
+  .mt-download-panel:not(.hidden) { gap: 8px; }
 }

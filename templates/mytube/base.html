@@ -16,6 +16,12 @@
     </form>
     <a class="mt-vd-link" href="/vidownloads">Vidownloads</a>
   </header>
+  <nav class="mt-mobilenav" aria-label="MyTube navigation">
+    <a href="/mytube" class="{{ 'active' if active == 'home' else '' }}">Home</a>
+    <a href="/mytube/trending" class="{{ 'active' if active == 'trending' else '' }}">Trending</a>
+    <a href="/mytube/subscriptions" class="{{ 'active' if active == 'subscriptions' else '' }}">Subscriptions</a>
+    <a href="/mytube/history" class="{{ 'active' if active == 'history' else '' }}">History</a>
+  </nav>
   <div class="mt-layout">
     <nav class="mt-sidebar" aria-label="MyTube navigation">
       <a href="/mytube" class="{{ 'active' if active == 'home' else '' }}">Home</a>
