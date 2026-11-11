@@ -24,6 +24,7 @@ from flask import Flask, after_this_request, jsonify, redirect, render_template,
 
 import youtube_api
 from youtube_api import YouTubeAPIError
+import recommendations
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -322,6 +323,28 @@ def mytube_api_channel_videos():
         videos = youtube_api.channel_uploads(channel_id, max_results=8)
     except YouTubeAPIError as exc:
         return jsonify({"error": str(exc)})
+    return jsonify({"videos": videos})
+
+
+@app.route("/mytube/api/recommendations", methods=["POST"])
+def mytube_api_recommendations():
+    """JSON: personalised 'Recommended for you' feed.
+
+    The browser POSTs its on-device signals (watch history, likes,
+    subscriptions from localStorage); the server runs the two-stage
+    recommendation pipeline (candidate generation + ranking) and returns
+    ranked videos. No sign-in. On any API problem an empty list is
+    returned so the section simply stays hidden.
+    """
+    if not youtube_api.is_configured():
+        return jsonify({"videos": []})
+    signals = request.get_json(silent=True) or {}
+    if not isinstance(signals, dict):
+        return jsonify({"videos": []})
+    try:
+        videos = recommendations.recommend_for(signals, max_results=24)
+    except YouTubeAPIError:
+        return jsonify({"videos": []})
     return jsonify({"videos": videos})
 
 

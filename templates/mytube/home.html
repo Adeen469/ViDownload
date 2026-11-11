@@ -10,6 +10,11 @@
   {% endfor %}
 </section>
 
+<section id="rec-section" class="mt-section hidden" aria-label="Recommended for you">
+  <h2>Recommended for you</h2>
+  <div id="rec-grid" class="mt-grid"></div>
+</section>
+
 <section id="because-row" class="mt-section hidden" aria-label="Because you watched">
   <h2 id="because-title">Because you watched</h2>
   <div id="because-grid" class="mt-grid"></div>
@@ -44,7 +49,10 @@
   // Home-page recommendations: boost watched channels to the front and
   // fill the "Because you watched" row from the most-watched channel.
   document.addEventListener("DOMContentLoaded", function () {
-    if (typeof MT !== "undefined") MT.homeRecommendations();
+    if (typeof MT !== "undefined") {
+      MT.homeRecommendations();
+      MT.loadRecommendations();
+    }
   });
 </script>
 {% endblock %}

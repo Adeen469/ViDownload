@@ -378,7 +378,7 @@
   function cardHtml(video) {
     var meta = [video.views_label, video.age].filter(Boolean).join(" · ");
     return (
-      '<article class="mt-card" data-channel-id="' + escapeHtml(video.channel_id || "") + '">' +
+      '<article class="mt-card" data-video-id="' + escapeHtml(video.id || "") + '" data-channel-id="' + escapeHtml(video.channel_id || "") + '">' +
         '<a class="mt-thumb" href="/mytube/watch?v=' + encodeURIComponent(video.id) + '">' +
           '<img src="' + escapeHtml(video.thumbnail || "") + '" alt="" loading="lazy">' +
           (video.duration_label ? '<span class="mt-duration">' + escapeHtml(video.duration_label) + "</span>" : "") +
@@ -419,11 +419,49 @@
       .then(function (res) { return res.json(); })
       .then(function (data) {
         if (!data || !data.videos || !data.videos.length) return;
+        // Don't repeat videos already shown in "Recommended for you".
+        var shown = {};
+        document.querySelectorAll("#rec-grid [data-video-id]").forEach(function (el) {
+          shown[el.getAttribute("data-video-id")] = true;
+        });
+        var fresh = data.videos.filter(function (v) { return !shown[v.id]; }).slice(0, 8);
+        if (!fresh.length) return;
         if (rowTitle) rowTitle.textContent = "Because you watched " + top.channel;
-        rowGrid.innerHTML = data.videos.slice(0, 8).map(cardHtml).join("");
+        rowGrid.innerHTML = fresh.map(cardHtml).join("");
         row.classList.remove("hidden");
       })
       .catch(function () { /* row stays hidden; recommendations degrade quietly */ });
+  }
+
+  /* ---- personalised feed ("Recommended for you") ---- */
+
+  function loadRecommendations() {
+    var grid = document.getElementById("rec-grid");
+    var section = document.getElementById("rec-section");
+    if (!grid || !section) return;
+    var history = getHistory();
+    var likes = readJSON(LIKES_KEY, {});
+    var subs = getSubs();
+    if (!history.length && !Object.keys(likes).length && !Object.keys(subs).length) return;
+    fetch("/mytube/api/recommendations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ history: history, likes: likes, subs: subs }),
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data || !data.videos || !data.videos.length) return;
+        // Don't repeat videos already shown in "Because you watched".
+        var shown = {};
+        document.querySelectorAll("#because-grid [data-video-id]").forEach(function (el) {
+          shown[el.getAttribute("data-video-id")] = true;
+        });
+        var fresh = data.videos.filter(function (v) { return !shown[v.id]; }).slice(0, 12);
+        if (!fresh.length) return;
+        grid.innerHTML = fresh.map(cardHtml).join("");
+        section.classList.remove("hidden");
+      })
+      .catch(function () { /* section stays hidden; feed degrades to trending */ });
   }
 
   /* ---- history / subscriptions pages ---- */
@@ -490,6 +528,7 @@
     wireSubscribeButton: wireSubscribeButton,
     setupAutoplayNext: setupAutoplayNext,
     homeRecommendations: homeRecommendations,
+    loadRecommendations: loadRecommendations,
     renderHistoryPage: renderHistoryPage,
     renderSubscriptionsPage: renderSubscriptionsPage,
   };
